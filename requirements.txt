@@ -1,0 +1,24 @@
+# AR2030 Camera Video Recorder Requirements
+# ==========================================
+
+# Core computer vision and video processing
+opencv-python>=4.8.0          # Computer vision library with video codec support
+numpy>=1.21.0                  # Numerical computing
+
+# Optional advanced video encoding (install via system package manager)
+# ffmpeg-python>=0.2.0         # Python FFmpeg wrapper (optional)
+
+# System utilities (usually pre-installed on Linux)
+# v4l-utils                     # Video4Linux utilities (install via apt/yum)
+# python3-gi                    # GObject introspection (for GStreamer, if needed)
+
+# Note: Some dependencies need to be installed via system package manager:
+# Ubuntu/Debian:
+#   sudo apt update
+#   sudo apt install python3-opencv v4l-utils ffmpeg
+#
+# Fedora/RHEL:
+#   sudo dnf install python3-opencv v4l-utils ffmpeg
+#
+# Arch Linux:
+#   sudo pacman -S python-opencv v4l-utils ffmpeg
