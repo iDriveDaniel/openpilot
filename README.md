@@ -1,108 +1,269 @@
-<div align="center" style="text-align: center;">
+# AR2030 Camera Video Recorder
 
-<h1>openpilot</h1>
+Professional video recording from AR2030 camera sensor with multiple format support, hardware acceleration, and comprehensive configuration options.
 
-<p>
-  <b>openpilot is an operating system for robotics.</b>
-  <br>
-  Currently, it upgrades the driver assistance system in 300+ supported cars.
-</p>
+## 📹 AR2030 Sensor Specifications
 
-<h3>
-  <a href="https://docs.comma.ai">Docs</a>
-  <span> · </span>
-  <a href="https://docs.comma.ai/contributing/roadmap/">Roadmap</a>
-  <span> · </span>
-  <a href="https://github.com/commaai/openpilot/blob/master/docs/CONTRIBUTING.md">Contribute</a>
-  <span> · </span>
-  <a href="https://discord.comma.ai">Community</a>
-  <span> · </span>
-  <a href="https://comma.ai/shop">Try it on a comma 3X</a>
-</h3>
+- **Resolution**: 1920x1200 (2.3MP)
+- **Frame rates**: Up to 60fps at full resolution
+- **Output formats**: Raw Bayer, YUV422, RGB
+- **Interface**: MIPI CSI-2 4-lane
+- **HDR support**: Yes
+- **Global shutter**: Yes
+- **Manufacturer**: ON Semiconductor
 
-Quick start: `bash <(curl -fsSL openpilot.comma.ai)`
+## ✨ Features
 
-[![openpilot tests](https://github.com/commaai/openpilot/actions/workflows/selfdrive_tests.yaml/badge.svg)](https://github.com/commaai/openpilot/actions/workflows/selfdrive_tests.yaml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![X Follow](https://img.shields.io/twitter/follow/comma_ai)](https://x.com/comma_ai)
-[![Discord](https://img.shields.io/discord/469524606043160576)](https://discord.comma.ai)
+- ✅ **Multiple video codecs** (H.264, H.265, VP9, MJPEG)
+- ✅ **Hardware acceleration support**
+- ✅ **Real-time compression**
+- ✅ **Configurable quality settings**
+- ✅ **Automatic file rotation**
+- ✅ **Performance monitoring**
+- ✅ **Error recovery**
+- ✅ **Predefined recording presets**
+- ✅ **AR2030-specific camera controls**
+- ✅ **Comprehensive logging**
 
-</div>
+## 🔧 Requirements
 
-<table>
-  <tr>
-    <td><a href="https://youtu.be/NmBfgOanCyk" title="Video By Greer Viau"><img src="https://github.com/commaai/openpilot/assets/8762862/2f7112ae-f748-4f39-b617-fabd689c3772"></a></td>
-    <td><a href="https://youtu.be/VHKyqZ7t8Gw" title="Video By Logan LeGrand"><img src="https://github.com/commaai/openpilot/assets/8762862/92351544-2833-40d7-9e0b-7ef7ae37ec4c"></a></td>
-    <td><a href="https://youtu.be/SUIZYzxtMQs" title="A drive to Taco Bell"><img src="https://github.com/commaai/openpilot/assets/8762862/05ceefc5-2628-439c-a9b2-89ce77dc6f63"></a></td>
-  </tr>
-</table>
+### System Dependencies
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install python3-opencv v4l-utils ffmpeg
 
+# Fedora/RHEL
+sudo dnf install python3-opencv v4l-utils ffmpeg
 
-Using openpilot in a car
-------
+# Arch Linux
+sudo pacman -S python-opencv v4l-utils ffmpeg
+```
 
-To use openpilot in a car, you need four things:
-1. **Supported Device:** a comma 3/3X, available at [comma.ai/shop](https://comma.ai/shop/comma-3x).
-2. **Software:** The setup procedure for the comma 3/3X allows users to enter a URL for custom software. Use the URL `openpilot.comma.ai` to install the release version.
-3. **Supported Car:** Ensure that you have one of [the 275+ supported cars](docs/CARS.md).
-4. **Car Harness:** You will also need a [car harness](https://comma.ai/shop/car-harness) to connect your comma 3/3X to your car.
+### Python Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-We have detailed instructions for [how to install the harness and device in a car](https://comma.ai/setup). Note that it's possible to run openpilot on [other hardware](https://blog.comma.ai/self-driving-car-for-free/), although it's not plug-and-play.
+## 🚀 Quick Start
 
-### Branches
-| branch           | URL                                    | description                                                                         |
-|------------------|----------------------------------------|-------------------------------------------------------------------------------------|
-| `release3`         | openpilot.comma.ai                      | This is openpilot's release branch.                                                 |
-| `release3-staging` | openpilot-test.comma.ai                | This is the staging branch for releases. Use it to get new releases slightly early. |
-| `nightly`          | openpilot-nightly.comma.ai             | This is the bleeding edge development branch. Do not expect this to be stable.      |
-| `nightly-dev`      | installer.comma.ai/commaai/nightly-dev | Same as nightly, but includes experimental development features for some cars.      |
-| `secretgoodopenpilot` | installer.comma.ai/commaai/secretgoodopenpilot | This is a preview branch from the autonomy team where new driving models get merged earlier than master. |
+### Basic Recording
+```bash
+# Start recording with default settings (1920x1200@30fps)
+python3 ar2030_video_recorder.py
 
-To start developing openpilot
-------
+# Record for 5 minutes with high quality preset
+python3 ar2030_video_recorder.py --preset high_quality --duration 300
 
-openpilot is developed by [comma](https://comma.ai/) and by users like you. We welcome both pull requests and issues on [GitHub](http://github.com/commaai/openpilot).
+# Fast recording for real-time applications
+python3 ar2030_video_recorder.py --preset fast
+```
 
-* Join the [community Discord](https://discord.comma.ai)
-* Check out [the contributing docs](docs/CONTRIBUTING.md)
-* Check out the [openpilot tools](tools/)
-* Code documentation lives at https://docs.comma.ai
-* Information about running openpilot lives on the [community wiki](https://github.com/commaai/openpilot/wiki)
+### List Available Presets
+```bash
+python3 ar2030_video_recorder.py --list-presets
+```
 
-Want to get paid to work on openpilot? [comma is hiring](https://comma.ai/jobs#open-positions) and offers lots of [bounties](https://comma.ai/bounties) for external contributors.
+Output:
+```
+Available recording presets:
+==================================================
+high_quality - High quality recording (1920x1200@30fps)
+             1920x1200 @ 30fps, mp4v
+standard     - Standard quality recording (1280x800@30fps)
+             1280x800 @ 30fps, XVID
+fast         - Fast recording for real-time (640x400@60fps)
+             640x400 @ 60fps, MJPG
+surveillance - Surveillance mode (1920x1200@15fps, space efficient)
+             1920x1200 @ 15fps, H264
+```
 
-Safety and Testing
-----
+## 📋 Recording Presets
 
-* openpilot observes [ISO26262](https://en.wikipedia.org/wiki/ISO_26262) guidelines, see [SAFETY.md](docs/SAFETY.md) for more details.
-* openpilot has software-in-the-loop [tests](.github/workflows/selfdrive_tests.yaml) that run on every commit.
-* The code enforcing the safety model lives in panda and is written in C, see [code rigor](https://github.com/commaai/panda#code-rigor) for more details.
-* panda has software-in-the-loop [safety tests](https://github.com/commaai/panda/tree/master/tests/safety).
-* Internally, we have a hardware-in-the-loop Jenkins test suite that builds and unit tests the various processes.
-* panda has additional hardware-in-the-loop [tests](https://github.com/commaai/panda/blob/master/Jenkinsfile).
-* We run the latest openpilot in a testing closet containing 10 comma devices continuously replaying routes.
+| Preset | Resolution | FPS | Codec | Use Case |
+|--------|------------|-----|--------|----------|
+| `high_quality` | 1920x1200 | 30 | mp4v | High quality recording |
+| `standard` | 1280x800 | 30 | XVID | Standard quality |
+| `fast` | 640x400 | 60 | MJPG | Real-time applications |
+| `surveillance` | 1920x1200 | 15 | H264 | Long-term monitoring |
 
-<details>
-<summary>MIT Licensed</summary>
+## 🎛️ Usage Examples
 
-openpilot is released under the MIT license. Some parts of the software are released under other licenses as specified.
+### Custom Configuration
+```bash
+# Custom resolution and codec
+python3 ar2030_video_recorder.py \
+    --width 1280 --height 720 \
+    --fps 60 --codec H264 \
+    --output ./my_recordings
 
-Any user of this software shall indemnify and hold harmless Comma.ai, Inc. and its directors, officers, employees, agents, stockholders, affiliates, subcontractors and customers from and against all allegations, claims, actions, suits, demands, damages, liabilities, obligations, losses, settlements, judgments, costs and expenses (including without limitation attorneys’ fees and costs) which arise out of, relate to or result from any use of this software by user.
+# Surveillance setup with file rotation
+python3 ar2030_video_recorder.py \
+    --preset surveillance \
+    --max-file-size 1024 \
+    --output ./security_footage \
+    --prefix security_cam
 
-**THIS IS ALPHA QUALITY SOFTWARE FOR RESEARCH PURPOSES ONLY. THIS IS NOT A PRODUCT.
-YOU ARE RESPONSIBLE FOR COMPLYING WITH LOCAL LAWS AND REGULATIONS.
-NO WARRANTY EXPRESSED OR IMPLIED.**
-</details>
+# High frame rate recording
+python3 ar2030_video_recorder.py \
+    --width 640 --height 480 \
+    --fps 60 --codec MJPG \
+    --pixel-format MJPG
+```
 
-<details>
-<summary>User Data and comma Account</summary>
+### Advanced Options
+```bash
+# Disable auto file rotation
+python3 ar2030_video_recorder.py --no-auto-rotate
 
-By default, openpilot uploads the driving data to our servers. You can also access your data through [comma connect](https://connect.comma.ai/). We use your data to train better models and improve openpilot for everyone.
+# Specify different camera device
+python3 ar2030_video_recorder.py --device /dev/video1
 
-openpilot is open source software: the user is free to disable data collection if they wish to do so.
+# Adjust camera buffer size
+python3 ar2030_video_recorder.py --buffer-size 5
+```
 
-openpilot logs the road-facing cameras, CAN, GPS, IMU, magnetometer, thermal sensors, crashes, and operating system logs.
-The driver-facing camera and microphone are only logged if you explicitly opt-in in settings.
+## 📊 Command Line Options
 
-By using openpilot, you agree to [our Privacy Policy](https://comma.ai/privacy). You understand that use of this software or its related services will generate certain types of user data, which may be logged and stored at the sole discretion of comma. By accepting this agreement, you grant an irrevocable, perpetual, worldwide right to comma for the use of this data.
-</details>
+### Recording Parameters
+- `--width` - Video width (default: 1920)
+- `--height` - Video height (default: 1200)
+- `--fps` - Frame rate (default: 30)
+- `--codec` - Video codec: mp4v, XVID, MJPG, H264, H265, VP9 (default: mp4v)
+- `--quality` - Video quality 1-100 (default: 85)
+
+### Device and Output
+- `--device` - Camera device path (default: /dev/video0)
+- `--output` - Output directory (default: ./recordings)
+- `--prefix` - Filename prefix (default: ar2030)
+
+### Recording Control
+- `--duration` - Recording duration in seconds (0 = infinite)
+- `--max-file-size` - Max file size in MB before rotation (default: 2048)
+- `--no-auto-rotate` - Disable automatic file rotation
+
+### Advanced Options
+- `--pixel-format` - Camera pixel format: YUYV, MJPG, RGB24 (default: YUYV)
+- `--buffer-size` - Camera buffer size (default: 3)
+
+## 📁 Output Files
+
+### File Naming
+Files are automatically named with timestamps:
+```
+ar2030_20240101_143022.mp4
+ar2030_20240101_144523.avi
+security_cam_20240101_150030.mp4
+```
+
+### Automatic Rotation
+Files are automatically rotated when:
+- Maximum duration is reached (default: 1 hour)
+- Maximum file size is reached (default: 2GB)
+- Can be disabled with `--no-auto-rotate`
+
+## 🔍 Monitoring and Logging
+
+### Real-time Status
+The recorder displays real-time information:
+```
+📸 Recording: 1847 frames, 30 fps, 61.6s
+💾 File size: 45.2 MB
+```
+
+### Log Files
+Detailed logs are saved to `recordings/recorder.log`:
+```
+2024-01-01 14:30:22,123 - INFO - ✅ AR2030 camera detected on /dev/video0
+2024-01-01 14:30:22,145 - INFO - 📐 Resolution: 1920x1200 (requested: 1920x1200)
+2024-01-01 14:30:22,146 - INFO - 🎬 Frame rate: 30.0fps (requested: 30fps)
+```
+
+## 🎥 Supported Video Codecs
+
+| Codec | Extension | Quality | Speed | Use Case |
+|-------|-----------|---------|--------|----------|
+| mp4v | .mp4 | High | Medium | General purpose |
+| H264 | .mp4 | High | Fast | Streaming, web |
+| H265 | .mp4 | Very High | Slow | Archival |
+| XVID | .avi | Medium | Fast | Compatibility |
+| MJPG | .avi | Low | Very Fast | Real-time |
+| VP9 | .mp4 | High | Slow | Web, modern |
+
+## 🔧 Camera Controls
+
+The recorder automatically configures AR2030-specific controls:
+- Auto exposure
+- Auto white balance
+- Auto gain
+- Brightness adjustment
+- Contrast enhancement
+- Saturation control
+- Sharpness optimization
+
+## 🚨 Troubleshooting
+
+### Camera Not Detected
+```bash
+# Check available cameras
+ls /dev/video*
+
+# Check camera information
+v4l2-ctl --device /dev/video0 --info
+
+# List supported formats
+v4l2-ctl --device /dev/video0 --list-formats-ext
+```
+
+### Permission Issues
+```bash
+# Add user to video group
+sudo usermod -a -G video $USER
+
+# Set device permissions
+sudo chmod 666 /dev/video0
+```
+
+### Codec Issues
+```bash
+# Check OpenCV codec support
+python3 -c "import cv2; print(cv2.getBuildInformation())"
+
+# Install additional codecs
+sudo apt install ubuntu-restricted-extras
+```
+
+## 📈 Performance Tips
+
+1. **Use MJPG for high frame rates** (60+ fps)
+2. **Use H264 for efficient storage** (surveillance)
+3. **Reduce resolution for real-time** applications
+4. **Increase buffer size** for stable capture
+5. **Use SSD storage** for high bitrate recording
+
+## 🔄 Exit and Cleanup
+
+The recorder handles graceful shutdown:
+- **Ctrl+C** - Stop recording and save file
+- **SIGTERM** - Graceful shutdown
+- **Automatic cleanup** on errors
+
+## 📋 System Requirements
+
+- **OS**: Linux (Ubuntu, Fedora, Arch, etc.)
+- **Python**: 3.8+
+- **OpenCV**: 4.8+
+- **Camera**: AR2030 sensor via V4L2
+- **Storage**: Fast storage recommended for high bitrates
+
+## 🤝 Contributing
+
+Feel free to submit issues and enhancement requests!
+
+## 📄 License
+
+This project is open source. Use it responsibly!
+
+---
+
+**🎬 Happy Recording with AR2030! 📹**
