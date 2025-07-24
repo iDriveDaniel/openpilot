@@ -9,8 +9,8 @@ elif TICI:
   from openpilot.selfdrive.modeld.runners.tinygrad_helpers import qcom_tensor_from_opencl_address
   os.environ['QCOM'] = '1'
 else:
-  os.environ['LLVM'] = '1'
-  os.environ['JIT'] = '2'
+  # Use GPU since models are compiled for GPU and system has GPU
+  os.environ['GPU'] = '1'
 from tinygrad.tensor import Tensor
 from tinygrad.dtype import dtypes
 import time
@@ -149,7 +149,7 @@ class ModelState:
     self.numpy_inputs['traffic_convention'][:] = inputs['traffic_convention']
     self.numpy_inputs['lateral_control_params'][:] = inputs['lateral_control_params']
     imgs_cl = {name: self.frames[name].prepare(bufs[name], transforms[name].flatten()) for name in self.vision_input_names}
-
+    # print(f"imgs_cl: {imgs_cl}")
     if TICI and not USBGPU:
       # The imgs tensors are backed by opencl memory, only need init once
       for key in imgs_cl:
@@ -181,7 +181,7 @@ class ModelState:
     combined_outputs_dict = {**vision_outputs_dict, **policy_outputs_dict}
     if SEND_RAW_PRED:
       combined_outputs_dict['raw_pred'] = np.concatenate([self.vision_output.copy(), self.policy_output.copy()])
-
+    # print(f"combined_outputs_dict: {combined_outputs_dict}")
     return combined_outputs_dict
 
 
@@ -259,6 +259,7 @@ def main(demo=False):
 
   while True:
     # Keep receiving frames until we are at least 1 frame ahead of previous extra frame
+    # print(f"meta_main.timestamp_sof: {meta_main.timestamp_sof}, meta_extra.timestamp_sof: {meta_extra.timestamp_sof}")
     while meta_main.timestamp_sof < meta_extra.timestamp_sof + 25000000:
       buf_main = vipc_client_main.recv()
       meta_main = FrameMeta(vipc_client_main)
@@ -281,7 +282,7 @@ def main(demo=False):
         cloudlog.debug("vipc_client_extra no frame")
         continue
 
-      if abs(meta_main.timestamp_sof - meta_extra.timestamp_sof) > 10000000:
+      if abs(meta_main.timestamp_sof - meta_extra.timestamp_sof) > 100000000:
         cloudlog.error(f"frames out of sync! main: {meta_main.frame_id} ({meta_main.timestamp_sof / 1e9:.5f}),\
                          extra: {meta_extra.frame_id} ({meta_extra.timestamp_sof / 1e9:.5f})")
 

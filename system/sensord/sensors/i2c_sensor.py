@@ -18,7 +18,8 @@ class Sensor:
     self.start_ts = 0.
 
   def __del__(self):
-    self.bus.close()
+    if hasattr(self, 'bus'):
+      self.bus.close()
 
   def read(self, addr: int, length: int) -> bytes:
     return bytes(self.bus.read_i2c_block_data(self.device_address, addr, length))

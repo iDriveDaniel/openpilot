@@ -28,21 +28,21 @@ _services: dict[str, tuple] = {
   "selfdriveState": (True, 100., 10),
   "pandaStates": (True, 10., 1),
   "peripheralState": (True, 2., 1),
-  "radarState": (True, 20., 5),
+  "radarState": (True, 15., 5),
   "roadEncodeIdx": (False, 20., 1),
   "liveTracks": (True, 20.),
   "sendcan": (True, 100., 139),
   "logMessage": (True, 0.),
   "errorLogMessage": (True, 0., 1),
-  "liveCalibration": (True, 4., 4),
-  "liveTorqueParameters": (True, 4., 1),
-  "liveDelay": (True, 4., 1),
+  "liveCalibration": (True, 1., 4),  # Reduced from 2 Hz to 1 Hz
+  "liveTorqueParameters": (True, 1., 1),  # Reduced from 2 Hz to 1 Hz
+  "liveDelay": (True, 1., 1),  # Reduced from 2 Hz to 1 Hz
   "androidLog": (True, 0.),
   "carState": (True, 100., 10),
   "carControl": (True, 100., 10),
   "carOutput": (True, 100., 10),
-  "longitudinalPlan": (True, 20., 10),
-  "driverAssistance": (True, 20., 20),
+  "longitudinalPlan": (True, 10., 10),  # Reduced from 20 Hz to 10 Hz
+  "driverAssistance": (True, 10., 20),  # Reduced from 20 Hz to 10 Hz
   "procLog": (True, 0.5, 15),
   "gpsLocationExternal": (True, 10., 10),
   "gpsLocation": (True, 1., 1),
@@ -51,8 +51,8 @@ _services: dict[str, tuple] = {
   "gnssMeasurements": (True, 10., 10),
   "clocks": (True, 0.1, 1),
   "ubloxRaw": (True, 20.),
-  "livePose": (True, 20., 4),
-  "liveParameters": (True, 20., 5),
+  "livePose": (True, 10., 4),  # Reduced from 20 Hz to 10 Hz
+  "liveParameters": (True, 10., 5),  # Reduced from 20 Hz to 10 Hz
   "cameraOdometry": (True, 20., 10),
   "thumbnail": (True, 1 / 60., 1),
   "onroadEvents": (True, 1., 1),
@@ -65,7 +65,7 @@ _services: dict[str, tuple] = {
   "wideRoadEncodeIdx": (False, 20., 1),
   "wideRoadCameraState": (True, 20., 20),
   "drivingModelData": (True, 20., 10),
-  "modelV2": (True, 20.),
+  "modelV2": (True, 15.),  # Reduced from 20 Hz to 15 Hz
   "managerState": (True, 2., 1),
   "uploaderState": (True, 0., 1),
   "navInstruction": (True, 1., 10),

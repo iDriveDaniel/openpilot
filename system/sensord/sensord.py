@@ -1,139 +1,166 @@
 #!/usr/bin/env python3
+"""
+Arduino BNO055 Sensor Daemon for Openpilot
+
+This is a drop-in replacement for the regular sensord.py that uses
+Arduino BNO055 sensors instead of LSM6DS3/MMC5603NJ sensors.
+
+It follows the exact same pattern as the original sensord.py but
+uses our Arduino BNO055 implementation.
+"""
+
 import os
 import time
-import ctypes
-import select
 import threading
 
 import cereal.messaging as messaging
 from cereal.services import SERVICE_LIST
-from openpilot.common.util import sudo_write
 from openpilot.common.realtime import config_realtime_process, Ratekeeper
 from openpilot.common.swaglog import cloudlog
-from openpilot.common.gpio import gpiochip_get_ro_value_fd, gpioevent_data
 
-from openpilot.system.sensord.sensors.i2c_sensor import Sensor
-from openpilot.system.sensord.sensors.lsm6ds3_accel import LSM6DS3_Accel
-from openpilot.system.sensord.sensors.lsm6ds3_gyro import LSM6DS3_Gyro
-from openpilot.system.sensord.sensors.lsm6ds3_temp import LSM6DS3_Temp
-from openpilot.system.sensord.sensors.mmc5603nj_magn import MMC5603NJ_Magn
+from openpilot.system.sensord.sensors.arduino_bno055 import (
+    ArduinoBNO055_Accel, ArduinoBNO055_Gyro, ArduinoBNO055_Magn
+)
 
-I2C_BUS_IMU = 1
+def polling_loop(sensor, service: str, event: threading.Event) -> None:
+    """
+    Polling loop for Arduino BNO055 sensors.
+    This follows the exact same pattern as the original sensord.py
+    """
+    pm = messaging.PubMaster([service])
+    rk = Ratekeeper(SERVICE_LIST[service].frequency, print_delay_threshold=None)
 
-def interrupt_loop(sensors: list[tuple[Sensor, str, bool]], event) -> None:
-  pm = messaging.PubMaster([service for sensor, service, interrupt in sensors if interrupt])
+    cloudlog.info(f"Starting {service} polling loop at {SERVICE_LIST[service].frequency} Hz")
 
-  # Requesting both edges as the data ready pulse from the lsm6ds sensor is
-  # very short (75us) and is mostly detected as falling edge instead of rising.
-  # So if it is detected as rising the following falling edge is skipped.
-  fd = gpiochip_get_ro_value_fd("sensord", 0, 84)
-
-  # Configure IRQ affinity
-  irq_path = "/proc/irq/336/smp_affinity_list"
-  if not os.path.exists(irq_path):
-    irq_path = "/proc/irq/335/smp_affinity_list"
-  if os.path.exists(irq_path):
-    sudo_write('1\n', irq_path)
-
-  offset = time.time_ns() - time.monotonic_ns()
-
-  poller = select.poll()
-  poller.register(fd, select.POLLIN | select.POLLPRI)
-  while not event.is_set():
-    events = poller.poll(100)
-    if not events:
-      cloudlog.error("poll timed out")
-      continue
-    if not (events[0][1] & (select.POLLIN | select.POLLPRI)):
-      cloudlog.error("no poll events set")
-      continue
-
-    dat = os.read(fd, ctypes.sizeof(gpioevent_data)*16)
-    evd = gpioevent_data.from_buffer_copy(dat)
-
-    cur_offset = time.time_ns() - time.monotonic_ns()
-    if abs(cur_offset - offset) > 10 * 1e6:  # ms
-      cloudlog.warning(f"time jumped: {cur_offset} {offset}")
-      offset = cur_offset
-      continue
-
-    ts = evd.timestamp - cur_offset
-    for sensor, service, interrupt in sensors:
-      if interrupt:
+    while not event.is_set():
         try:
-          evt = sensor.get_event(ts)
-          if not sensor.is_data_valid():
-            continue
-          msg = messaging.new_message(service, valid=True)
-          setattr(msg, service, evt)
-          pm.send(service, msg)
-        except Sensor.DataNotReady:
-          pass
+            evt = sensor.get_event()
+            if not sensor.is_data_valid():
+                continue
+            msg = messaging.new_message(service, valid=True)
+            print("message created", msg)
+            setattr(msg, service, evt)
+            pm.send(service, msg)
         except Exception:
-          cloudlog.exception(f"Error processing {service}")
-
-
-def polling_loop(sensor: Sensor, service: str, event: threading.Event) -> None:
-  pm = messaging.PubMaster([service])
-  rk = Ratekeeper(SERVICE_LIST[service].frequency, print_delay_threshold=None)
-  while not event.is_set():
-    try:
-      evt = sensor.get_event()
-      if not sensor.is_data_valid():
-        continue
-      msg = messaging.new_message(service, valid=True)
-      setattr(msg, service, evt)
-      pm.send(service, msg)
-    except Exception:
-      cloudlog.exception(f"Error in {service} polling loop")
-    rk.keep_time()
+            cloudlog.exception(f"Error in {service} polling loop")
+        rk.keep_time()
 
 def main() -> None:
-  config_realtime_process([1, ], 1)
+    """Main function - follows the exact same pattern as original sensord.py"""
 
-  sensors_cfg = [
-    (LSM6DS3_Accel(I2C_BUS_IMU), "accelerometer", True),
-    (LSM6DS3_Gyro(I2C_BUS_IMU), "gyroscope", True),
-    (LSM6DS3_Temp(I2C_BUS_IMU), "temperatureSensor", False),
-    (MMC5603NJ_Magn(I2C_BUS_IMU), "magnetometer", False),
-  ]
+    # Configure real-time process (same as original)
+    config_realtime_process([1], 1)
 
-  # Initialize sensors
-  exit_event = threading.Event()
-  threads = [
-    threading.Thread(target=interrupt_loop, args=(sensors_cfg, exit_event), daemon=True)
-  ]
-  for sensor, service, interrupt in sensors_cfg:
+    # Arduino device configuration
+    device_path = "/dev/ttyACM0"  # Default Arduino device
+    baudrate = 115200
+
+    # Check if device exists
+    if not os.path.exists(device_path):
+        cloudlog.error(f"Arduino device {device_path} not found!")
+        # Try alternative devices
+        for alt_device in ["/dev/ttyACM1", "/dev/ttyUSB0", "/dev/ttyUSB1"]:
+            if os.path.exists(alt_device):
+                device_path = alt_device
+                cloudlog.info(f"Using alternative device: {device_path}")
+                break
+        else:
+            cloudlog.error("No Arduino device found!")
+            return
+
+    cloudlog.info(f"Using Arduino BNO055 at {device_path} (baudrate: {baudrate})")
+
+    # Create a shared sensor connection (all sensors use the same Arduino)
+    base_sensor = ArduinoBNO055_Accel(device_path, baudrate)
+
+    # Initialize the Arduino connection
+    cloudlog.info("Initializing Arduino BNO055 connection...")
+    if not base_sensor.init():
+        cloudlog.error("Failed to initialize Arduino BNO055!")
+        return
+
+    cloudlog.info("Arduino BNO055 initialized successfully!")
+
+    # Create sensor instances that share the same connection
+    accel_sensor = base_sensor
+    gyro_sensor = ArduinoBNO055_Gyro(device_path, baudrate)
+    mag_sensor = ArduinoBNO055_Magn(device_path, baudrate)
+
+    # Share the connection and data with other sensors
+    gyro_sensor.serial_conn = base_sensor.serial_conn
+    gyro_sensor.latest_data = base_sensor.latest_data
+    gyro_sensor.data_lock = base_sensor.data_lock
+    gyro_sensor.last_read_time = base_sensor.last_read_time
+
+    mag_sensor.serial_conn = base_sensor.serial_conn
+    mag_sensor.latest_data = base_sensor.latest_data
+    mag_sensor.data_lock = base_sensor.data_lock
+    mag_sensor.last_read_time = base_sensor.last_read_time
+
+    # Sensor configuration (same format as original sensord.py)
+    # Note: All our sensors use polling (interrupt=False) since they share one serial connection
+    sensors_cfg = [
+        (accel_sensor, "accelerometer", True),
+        (gyro_sensor, "gyroscope", True),
+        (mag_sensor, "magnetometer", True),
+    ]
+
+    # Wait for initial data
+    cloudlog.info("Waiting for sensor data...")
+    start_time = time.time()
+    while time.time() - start_time < 10.0:
+        if base_sensor.is_data_valid():
+            cloudlog.info("Sensor data available, starting polling loops")
+            break
+        time.sleep(0.1)
+    else:
+        cloudlog.error("Timeout waiting for sensor data")
+        base_sensor.shutdown()
+        return
+
+    # Create and start polling threads (same pattern as original)
+    event = threading.Event()
+    threads = []
+
+    for sensor, service, interrupt in sensors_cfg:
+        if not interrupt:  # All our sensors use polling
+            thread = threading.Thread(target=polling_loop, args=(sensor, service, event), daemon=True)
+            threads.append(thread)
+            thread.start()
+            cloudlog.info(f"Started {service} polling thread")
+
+    cloudlog.info("Arduino BNO055 sensor daemon started successfully!")
+
     try:
-      sensor.init()
-      if not interrupt:
-        # Start polling thread for sensors without interrupts
-        threads.append(threading.Thread(
-          target=polling_loop,
-          args=(sensor, service, exit_event),
-          daemon=True
-        ))
-    except Exception:
-      cloudlog.exception(f"Error initializing {service} sensor")
+        # Main loop - just wait for threads
+        while True:
+            # Check if any threads have died
+            for thread in threads:
+                if not thread.is_alive():
+                    cloudlog.error("A sensor thread has died, shutting down")
+                    event.set()
+                    break
 
-  try:
-    for t in threads:
-      t.start()
-    while any(t.is_alive() for t in threads):
-      time.sleep(1)
-  except KeyboardInterrupt:
-    pass
-  finally:
-    exit_event.set()
-    for t in threads:
-      if t.is_alive():
-        t.join()
+            if event.is_set():
+                break
 
-    for sensor, _, _ in sensors_cfg:
-      try:
-        sensor.shutdown()
-      except Exception:
-        cloudlog.exception("Error shutting down sensor")
+            time.sleep(1.0)
+
+    except KeyboardInterrupt:
+        cloudlog.info("Shutting down due to keyboard interrupt")
+        event.set()
+
+    # Cleanup
+    cloudlog.info("Shutting down Arduino BNO055 sensor daemon...")
+    event.set()
+
+    # Wait for threads to finish
+    for thread in threads:
+        thread.join(timeout=2.0)
+
+    # Shutdown the Arduino connection
+    base_sensor.shutdown()
+    cloudlog.info("Arduino BNO055 sensor daemon shutdown complete")
 
 if __name__ == "__main__":
-  main()
+    main()
